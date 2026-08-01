@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel | Civic Action & GIS Response Platform</title>
+  
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- SCREEN 1: AUTHENTICATION PAGE -->
+  <div id="authScreen" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="brand-header">
+        <h1>🛡️ Sentinel</h1>
+        <p>Civic Threat Reporting & GIS Dispatch Platform</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="loginTab" class="tab-btn active">Sign In</button>
+        <button id="signupTab" class="tab-btn">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="auth-form">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="loginEmail" placeholder="name@domain.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required>
+        </div>
+
+        <div style="text-align: right; margin-bottom: 15px;">
+          <a href="#" id="openForgotPassword" style="color: var(--accent); font-size: 0.85rem; text-decoration: none; font-weight: 600;">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="btn-primary">Sign In to Sentinel</button>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signupForm" class="auth-form hidden">
+        <div class="form-group">
+          <label>Full Name / Title</label>
+          <input type="text" id="signupName" placeholder="John Doe" required>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="signupEmail" placeholder="name@domain.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signupPassword" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label>Account Type</label>
+          <select id="signupRole">
+            <option value="citizen">Citizen Account</option>
+            <option value="authority">Government / Security Force</option>
+          </select>
+        </div>
+
+        <div id="authorityFields" class="hidden">
+          <div class="form-group">
+            <label>Agency / Unit Name</label>
+            <input type="text" id="signupAgency" placeholder="e.g. Anti-Kidnapping Squad">
+          </div>
+          <div class="form-group">
+            <label>Authority Clearance Passkey</label>
+            <input type="password" id="signupPasskey" placeholder="Enter force key">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Create Account</button>
+      </form>
+
+      <!-- FORGOT / RESET PASSWORD MODAL OVERLAY -->
+      <div id="forgotPasswordModal" class="hidden" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3 style="font-size: 1.1rem; color: var(--primary);">🔐 Password Recovery</h3>
+          <button type="button" id="closeForgotModal" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+        </div>
+
+        <!-- Step 1: Request Reset Token -->
+        <form id="requestTokenForm">
+          <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.8rem;">
+            Enter your email to request a reset token.
+          </p>
+          <div class="form-group">
+            <label>Registered Email</label>
+            <input type="email" id="resetEmail" placeholder="name@domain.com" required>
+          </div>
+          <button type="submit" class="btn-primary" style="background: #3b82f6;">Request Reset Token</button>
+        </form>
+
+        <!-- Step 2: Set New Password -->
+        <form id="resetPasswordForm" class="hidden">
+          <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.8rem;">
+            Token retrieved! Enter the token and your new password.
+          </p>
+          <div class="form-group">
+            <label>Reset Token</label>
+            <input type="text" id="resetTokenInput" placeholder="Paste token here" required>
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="newPasswordInput" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn-primary" style="background: #16a34a;">Update Password</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCREEN 2: MAIN DASHBOARD -->
+  <div id="appScreen" class="hidden">
+    
+    <div class="emergency-banner">
+      <div class="emergency-info">
+        <span class="pulse-indicator"></span>
+        <div>
+          <strong>🚨 Rapid Security & Distress Dispatch</strong>
+          <p style="margin:0; font-size: 0.85rem;">Active threat? Call national emergency lines direct:</p>
+        </div>
+      </div>
+      <div class="emergency-actions">
+        <a href="tel:112" class="btn-emergency-pill">📞 Emergency Direct (112)</a>
+        <a href="tel:199" class="btn-emergency-pill alt">🚔 Police / Security (199)</a>
+      </div>
+    </div>
+
+    <header>
+      <div class="header-content">
+        <div>
+          <h1>🛡️ Sentinel Hub</h1>
+          <p>Live Incident Monitoring & Security Routing</p>
+        </div>
+        <div id="authNav"></div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- Live Map View Card -->
+      <div class="card map-card">
+        <div class="map-header">
+          <h2>🗺️ Live Incident Dispatch Map</h2>
+          <button id="useGPSBtn" class="btn-gps">🎯 Detect GPS Location</button>
+        </div>
+        <div id="map"></div>
+        <p class="map-instruction">📍 Tap anywhere on the map or use GPS to pin coordinates.</p>
+      </div>
+
+      <!-- Fast Dispatch Command Center -->
+      <div class="card command-card">
+        <h2>⚡ Fast Dispatch Command Center</h2>
+        <p style="color:#64748b; font-size:0.85rem; margin-bottom:1.2rem;">
+          Tap any incident button below to select your category instantly.
+        </p>
+
+        <!-- 1-TAP CATEGORY SELECTION BUTTONS -->
+        <div class="category-grid">
+          <button type="button" class="category-btn danger active" data-category="Kidnapping & Abduction Threats" onclick="selectCategory(this, 'Kidnapping & Abduction Threats')">
+            <span class="btn-icon">🚨</span>
+            <span>Kidnapping / Abduction</span>
+          </button>
+
+          <button type="button" class="category-btn warning" data-category="Armed Robbery & Violent Crime" onclick="selectCategory(this, 'Armed Robbery & Violent Crime')">
+            <span class="btn-icon">🚔</span>
+            <span>Armed Robbery</span>
+          </button>
+
+          <button type="button" class="category-btn info" data-category="Infrastructure & Roads" onclick="selectCategory(this, 'Infrastructure & Roads')">
+            <span class="btn-icon">🚧</span>
+            <span>Roads & Infrastructure</span>
+          </button>
+
+          <button type="button" class="category-btn utility" data-category="Water & Sewage" onclick="selectCategory(this, 'Water & Sewage')">
+            <span class="btn-icon">💧</span>
+            <span>Water & Sewage</span>
+          </button>
+
+          <button type="button" class="category-btn power" data-category="Electricity & Power Grid" onclick="selectCategory(this, 'Electricity & Power Grid')">
+            <span class="btn-icon">⚡</span>
+            <span>Electricity Grid</span>
+          </button>
+
+          <button type="button" class="category-btn health" data-category="Public Health & Sanitation" onclick="selectCategory(this, 'Public Health & Sanitation')">
+            <span class="btn-icon">🏥</span>
+            <span>Public Health</span>
+          </button>
+
+          <button type="button" class="category-btn general" data-category="Other Urgent Matters" onclick="selectCategory(this, 'Other Urgent Matters')">
+            <span class="btn-icon">📁</span>
+            <span>Other Urgent Issue</span>
+          </button>
+        </div>
+
+        <form id="reportForm">
+          <input type="hidden" id="selectedCategory" value="Kidnapping & Abduction Threats">
+
+          <div class="form-group">
+            <label for="title">Incident Title <small style="color:#64748b; font-weight:normal;">(Optional - Auto-generated if blank)</small></label>
+            <input type="text" id="title" placeholder="Auto-generated based on category if left blank">
+          </div>
+
+          <div class="form-group">
+            <label for="location">Location Description <small style="color:#64748b; font-weight:normal;">(Optional - Uses GPS/Map pin if blank)</small></label>
+            <input type="text" id="location" placeholder="e.g. Expressway Junction / Selected on Map">
+          </div>
+
+          <input type="hidden" id="latitude">
+          <input type="hidden" id="longitude">
+
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.4rem;">
+              <label for="description" style="margin-bottom:0;">Detailed Breakdown</label>
+              <button type="button" id="voiceMicBtn" class="btn-voice">
+                🎙️ Speak Details
+              </button>
+            </div>
+            <textarea id="description" rows="3" placeholder="Provide details or tap the mic button to speak..."></textarea>
+          </div>
+
+          <!-- DIRECT CAMERA AND UPLOAD BUTTONS -->
+          <div class="form-group">
+            <label style="display:block; margin-bottom: 0.4rem;">Evidence Image (Optional)</label>
+            
+            <div class="camera-actions">
+              <button type="button" id="startLiveCameraBtn" class="btn-camera" style="border:none; cursor:pointer;">
+                📸 Take Quick Photo
+              </button>
+
+              <label for="imageInput" class="btn-upload">
+                📁 Choose File
+              </label>
+              <input type="file" id="imageInput" accept="image/*" class="hidden-input">
+            </div>
+            
+            <div id="imagePreviewContainer" class="hidden" style="margin-top: 0.6rem; text-align: center;">
+              <img id="imagePreview" src="" alt="Captured Evidence" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid #cbd5e1;">
+              <p id="imageFileName" style="font-size: 0.75rem; color: #16a34a; font-weight: 600; margin-top: 0.25rem;"></p>
+            </div>
+          </div>
+
+          <button type="submit" id="submitBtn" class="btn-primary-dispatch">🚀 DISPATCH REPORT NOW</button>
+        </form>
+      </div>
+
+      <!-- Feed & Stream -->
+      <div class="card feed-card">
+        <h2>📡 Active Dispatch Stream</h2>
+        <p style="color:#64748b; font-size:0.85rem; margin-bottom:1.2rem;">
+          Real-time civic alerts and force dispatch updates.
+        </p>
+
+        <div class="controls-bar">
+          <input type="text" id="searchInput" placeholder="🔍 Search location or keyword...">
+          <select id="filterCategory">
+            <option value="ALL">All Categories</option>
+            <option value="Kidnapping & Abduction Threats">🚨 Kidnapping</option>
+            <option value="Armed Robbery & Violent Crime">🚔 Armed Robbery</option>
+            <option value="Infrastructure & Roads">🚧 Infrastructure</option>
+            <option value="Water & Sewage">💧 Water & Sewage</option>
+            <option value="Electricity & Power Grid">⚡ Electricity</option>
+            <option value="Public Health & Sanitation">🏥 Public Health</option>
+            <option value="Other Urgent Matters">📁 Other Matters</option>
+          </select>
+        </div>
+
+        <div id="reportsList">
+          <p style="color: #64748b; text-align: center;">Loading dispatch stream...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIRECT WEBCAM / CAMERA CAPTURE MODAL -->
+  <div id="cameraModal" class="hidden" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="background: #ffffff; padding: 1.2rem; border-radius: 12px; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
+      <h3 style="margin-top:0; color: #0f172a;">📸 Sentinel Camera Viewfinder</h3>
+      <div style="position: relative; background: #000; border-radius: 8px; overflow: hidden; height: 280px;">
+        <video id="cameraFeed" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+      </div>
+      <canvas id="cameraCanvas" class="hidden"></canvas>
+      <div style="display: flex; gap: 0.8rem; justify-content: center; margin-top: 1rem;">
+        <button id="capturePhotoBtn" type="button" style="background: #16a34a; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">📷 Snap Photo</button>
+        <button id="closeCameraModalBtn" type="button" style="background: #64748b; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast">Notification message</div>
+
+  <script src="script.js"></script>
+</body>
+</html>

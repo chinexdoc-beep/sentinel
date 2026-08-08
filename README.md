@@ -2,6 +2,9 @@
 
 A web application that allows citizens to report local civic issues (such as potholes, broken streetlights, or public hazards) with photo uploads, location tagging, and real-time status tracking.
 
+## Live Application
+🚀 **Deployed Web App:** (https://sentinel-7lqb.onrender.com)
+
 ## Features
 * **Report Issues:** Submit detailed reports with images, titles, and descriptions.
 * **GPS & Map Integration:** Automatically capture device location or select coordinates manually on an interactive map.
@@ -18,6 +21,6 @@ A web application that allows citizens to report local civic issues (such as pot
 
 1. **Clone the repository and install dependencies:**
    ```bash
-   git clone <https://github.com/chinexdoc-beep/sentinel.git>
+   git clone (https://github.com/chinexdoc-beep/sentinel.git)
    cd sentinel
    npm install

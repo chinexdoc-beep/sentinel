@@ -16,7 +16,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'sentinel_super_secret_key_2026';
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Sentinel Engine connected to MongoDB Atlas!'))

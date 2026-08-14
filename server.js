@@ -9,10 +9,13 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jwt-simple');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'sentinel_super_secret_key_2026';
+
+// Initialize Resend with your environment variable
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -69,24 +72,14 @@ const reportSchema = new mongoose.Schema({
 const Report = mongoose.model('Report', reportSchema);
 
 // -------------------------------------------------------------
-// NODEMAILER TRANSPORTER & EMAIL HELPERS
+// RESEND EMAIL HELPERS
 // -------------------------------------------------------------
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  family: 4
-});
 
 // 1. WELCOME EMAIL
 const sendWelcomeEmail = async (userEmail, userName) => {
   try {
-    const mailOptions = {
-      from: `"Sentinel Security" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'Sentinel Security <onboarding@resend.dev>',
       to: userEmail,
       subject: 'Welcome to Sentinel',
       text: `Hi ${userName},\n\nThank you for signing up for Sentinel! Your account is active.\n\nYou can log in to report civic incidents, track emergency responses, and view updates in real-time.\n\nIf you did not request this account, please ignore this message.\n\nBest regards,\nSentinel Team`,
@@ -100,9 +93,7 @@ const sendWelcomeEmail = async (userEmail, userName) => {
           <p>Best regards,<br><strong>The Sentinel Team</strong></p>
         </div>
       `
-    };
-
-    await transporter.sendMail(mailOptions);
+    });
     console.log(`📧 Welcome email sent to ${userEmail}`);
   } catch (error) {
     console.error('⚠️ Could not send welcome email:', error.message);
@@ -112,8 +103,8 @@ const sendWelcomeEmail = async (userEmail, userName) => {
 // 2. PASSWORD RESET EMAIL
 const sendPasswordResetEmail = async (userEmail, resetToken) => {
   try {
-    const mailOptions = {
-      from: `"Sentinel Security" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'Sentinel Security <onboarding@resend.dev>',
       to: userEmail,
       subject: 'Password Reset Request - Sentinel',
       text: `Hi,\n\nYou requested a password reset for your Sentinel account. Use the following code to reset your password:\n\nReset Code: ${resetToken}\n\nThis token will expire in 1 hour. If you did not request a password reset, please ignore this email.\n\nBest regards,\nSentinel Security Team`,
@@ -130,9 +121,7 @@ const sendPasswordResetEmail = async (userEmail, resetToken) => {
           <p>Best regards,<br><strong>The Sentinel Security Team</strong></p>
         </div>
       `
-    };
-
-    await transporter.sendMail(mailOptions);
+    });
     console.log(`🔑 Reset token email sent to ${userEmail}`);
   } catch (error) {
     console.error('⚠️ Could not send password reset email:', error.message);
@@ -142,10 +131,10 @@ const sendPasswordResetEmail = async (userEmail, resetToken) => {
 // 3. AGENCY INCIDENT DISPATCH EMAIL
 const sendAgencyDispatchEmail = async (agencyEmail, report) => {
   try {
-    const targetEmail = process.env.EMAIL_USER; // Fallback to verified email for local testing
+    const targetEmail = process.env.EMAIL_USER || agencyEmail;
 
-    const mailOptions = {
-      from: `"Sentinel Dispatch Unit" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'Sentinel Dispatch Unit <onboarding@resend.dev>',
       to: targetEmail,
       subject: `🚨 [ALERT] New Incident Dispatched: ${report.title}`,
       text: `EMERGENCY DISPATCH ALERT\n\nTitle: ${report.title}\nCategory: ${report.category}\nLocation: ${report.location} (${report.latitude}, ${report.longitude})\nReported By: ${report.reportedBy}\nAssigned Agency: ${agencyEmail}\n\nDescription:\n${report.description}`,
@@ -168,9 +157,7 @@ const sendAgencyDispatchEmail = async (agencyEmail, report) => {
           <p style="font-size: 13px; color: #777;">Sentinel Dispatch & Operations Center</p>
         </div>
       `
-    };
-
-    await transporter.sendMail(mailOptions);
+    });
     console.log(`🚨 Emergency dispatch email sent for report "${report.title}"`);
   } catch (error) {
     console.error('⚠️ Could not send dispatch email:', error.message);
